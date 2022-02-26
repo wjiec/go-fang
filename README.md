@@ -17,6 +17,7 @@ go get -u github.com/wjiec/go-fang
 
 See [godoc](https://godoc.org/github.com/wjiec/go-fang)
 
+More details about fang can be found at [doc.go](doc.go)
 
 ### Quick Start
 
