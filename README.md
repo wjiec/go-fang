@@ -106,9 +106,39 @@ func main() {
 }
 ```
 
-#### Extensions
+#### Production
 
-At binding time, fields that have been assigned a value will have it as the default value for command line arguments. A better practice might be to read from environment variables at runtime. Environment variable binding is not provided in fang and can be implemented using other third-party libraries (e.g. [kelseyhightower/envconfig](https://github.com/kelseyhightower/envconfig)).
+At binding time, fields that have been assigned a value will have it as the default value for command line arguments. For example, we first read the configuration from a config file (such as a json or yaml file) and then override the values of those configurations using command line arguments.
+```go
+package main
+
+import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+
+	"github.com/spf13/cobra"
+	"github.com/wjiec/go-fang"
+)
+
+type Config struct {
+	Username string `yaml:"username" shorthand:"u" usage:"username to login database"`
+	Password string `yaml:"password" usage:"password for username to login"`
+}
+
+func main() {
+	var cfg Config
+	fp, _ := os.Open("config.json")
+	content, _ := ioutil.ReadAll(fp)
+	_ = json.Unmarshal(content, &cfg)
+
+	root := cobra.Command{Use: "dbc"}
+	_ = fang.Bind(&root, &cfg)
+	// ...
+}
+```
+
+It is also possible to set default values for command line arguments by reading environment variables, but note that fang does not provide a way to bind environment variables. This can be done with third-party libraries(e.g. [kelseyhightower/envconfig](https://github.com/kelseyhightower/envconfig)).
 
 
 ### License
