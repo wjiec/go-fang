@@ -359,7 +359,7 @@ func (f *structField) Required() bool {
 // attrs returns a list of the string indicates the extra attribute for command line argument
 func (f *structField) attrs() []string {
 	return strings.FieldsFunc(f.Field.Tag.Get("fang"), func(r rune) bool {
-		return r == '.' || r == ' '
+		return r == ',' || r == ' '
 	})
 }
 

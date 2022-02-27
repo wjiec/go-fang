@@ -65,8 +65,8 @@ Available tags
 	  fang does not verify the uniqueness of this tag, and spf13/cobra gives an error when
 	  there are multi identical abbreviations.
 	* usage: one line string indicates help message of argument in command.
-	* fang: the extra attribute for fang to binding command line argument. The following
-	  attributes can be configured:
+	* fang: the extra attributes used to control command line arguments binding (comma or
+	  space separated). The following attributes can be configured:
 		1) persistent, persist, p: meaning arguments should be persisted to subcommands
 		2) required, require, r: meaning arguments is required
 */
