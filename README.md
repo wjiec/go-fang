@@ -1,5 +1,5 @@
 # go-fang
-[![GoDoc](https://godoc.org/github.com/wjiec/go-fang?status.svg)](https://godoc.org/github.com/wjiec/go-fang)
+[![Go Reference](https://pkg.go.dev/badge/github.com/wjiec/go-fang.svg)](https://pkg.go.dev/github.com/wjiec/go-fang)
 [![Go Report Card](https://goreportcard.com/badge/github.com/wjiec/go-fang)](https://goreportcard.com/report/github.com/wjiec/go-fang)
 
 Package fang provides a simple and elegant way to bind command line
@@ -15,7 +15,7 @@ go get -u github.com/wjiec/go-fang
 
 ### Documentation
 
-See [godoc](https://godoc.org/github.com/wjiec/go-fang)
+See [Go Reference](https://pkg.go.dev/github.com/wjiec/go-fang)
 
 More details about fang can be found at [doc.go](doc.go)
 
