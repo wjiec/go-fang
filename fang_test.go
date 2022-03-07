@@ -71,7 +71,7 @@ func TestBind_NestedStruct(t *testing.T) {
 	}
 }
 
-func TestBind_IPType(t *testing.T) {
+func TestBind_IP(t *testing.T) {
 	var value struct {
 		IP net.IP `name:"ip"`
 	}
@@ -85,7 +85,7 @@ func TestBind_IPType(t *testing.T) {
 	}
 }
 
-func TestBind_DurationType(t *testing.T) {
+func TestBind_Duration(t *testing.T) {
 	var value struct {
 		Duration time.Duration
 	}
@@ -112,6 +112,72 @@ func TestBind_IPSlice(t *testing.T) {
 			if err = b.cmd.ParseFlags(args); assert.NoError(t, err) {
 				assert.Equal(t, net.ParseIP("192.168.1.1"), value.IPs[0])
 				assert.Equal(t, net.ParseIP("192.168.1.2"), value.IPs[1])
+			}
+		}
+	}
+}
+
+func TestBind_IPNet(t *testing.T) {
+	var value struct {
+		IP *net.IPNet `name:"ip"`
+	}
+
+	if b, err := New(&cobra.Command{}); assert.NoError(t, err) {
+		if err = b.Bind(&value); assert.NoError(t, err) {
+			if err = b.cmd.ParseFlags([]string{"--ip", "192.168.1.1/24"}); assert.NoError(t, err) {
+				if _, IPNet, err := net.ParseCIDR("192.168.1.1/24"); assert.NoError(t, err) {
+					assert.Equal(t, *IPNet, *value.IP)
+				}
+			}
+		}
+	}
+}
+
+func TestBind_IPMask(t *testing.T) {
+	var value struct {
+		Mask net.IPMask `shorthand:"m"`
+	}
+
+	if b, err := New(&cobra.Command{}); assert.NoError(t, err) {
+		if err = b.Bind(&value); assert.NoError(t, err) {
+			if err = b.cmd.ParseFlags([]string{"-m", "255.255.255.0"}); assert.NoError(t, err) {
+				assert.Equal(t, net.IPv4Mask(255, 255, 255, 0), value.Mask)
+			}
+		}
+	}
+}
+
+func TestBind_Count(t *testing.T) {
+	var value struct {
+		Verbose Count `shorthand:"v"`
+	}
+
+	if b, err := New(&cobra.Command{}); assert.NoError(t, err) {
+		if err = b.Bind(&value); assert.NoError(t, err) {
+			if err = b.cmd.ParseFlags([]string{"-vvv"}); assert.NoError(t, err) {
+				assert.Equal(t, Count(3), value.Verbose)
+			}
+		}
+	}
+
+	if b, err := New(&cobra.Command{}); assert.NoError(t, err) {
+		if err = b.Bind(&value); assert.NoError(t, err) {
+			if err = b.cmd.ParseFlags([]string{"-v", "-v"}); assert.NoError(t, err) {
+				assert.Equal(t, Count(2), value.Verbose)
+			}
+		}
+	}
+}
+
+func TestBind_BytesHex(t *testing.T) {
+	var value struct {
+		Key BytesHex `shorthand:"k"`
+	}
+
+	if b, err := New(&cobra.Command{}); assert.NoError(t, err) {
+		if err = b.Bind(&value); assert.NoError(t, err) {
+			if err = b.cmd.ParseFlags([]string{"-k", "a1b2c3"}); assert.NoError(t, err) {
+				assert.Equal(t, BytesHex{0xa1, 0xb2, 0xc3}, value.Key)
 			}
 		}
 	}

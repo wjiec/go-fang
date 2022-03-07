@@ -36,8 +36,19 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// Count is an integer type which is used to count the number of occurrences of
+// command-line arguments. Commonly used for Verbose (incremental logging level via -vvv)
+type Count int
+
+// BytesHex is a byte array type, which is parsed by hex on the command-line arguments
+type BytesHex []byte
+
 var (
 	_IPType       = reflect.TypeOf(net.IP{})
+	_CountType    = reflect.TypeOf(Count(0))
+	_IPNetType    = reflect.TypeOf(net.IPNet{})
+	_IPMaskType   = reflect.TypeOf(net.IPMask{})
+	_BytesHexType = reflect.TypeOf(BytesHex{})
 	_DurationType = reflect.TypeOf(time.Duration(0))
 )
 
@@ -112,8 +123,13 @@ func (b *Binder) Bind(v interface{}) error {
 // appropriate binding method depending on the type
 func (b *Binder) bindToStruct(v reflect.Value) error {
 	return visitStructField(v, func(field *structField) error {
-		if field.Type == _IPType || field.Type == _DurationType {
+		switch field.Type {
+		case _IPType, _DurationType, _IPNetType, _IPMaskType:
 			return b.bindToPrimitive(field.Value)(newInvoker(b, field))
+		case _CountType:
+			return b.bindToCount(field.Value)(newInvoker(b, field))
+		case _BytesHexType:
+			return b.bindToBytesHex(field.Value)(newInvoker(b, field))
 		}
 
 		switch field.Type.Kind() {
@@ -180,9 +196,14 @@ func (b *Binder) bindToMap(v reflect.Value) func(*invoker) error {
 // bindToPrimitive invoking the binding method depending on the primitive type
 func (b *Binder) bindToPrimitive(v reflect.Value) func(*invoker) error {
 	return func(ivk *invoker) error {
-		if t := v.Type(); t == _IPType {
+		switch v.Type() {
+		case _IPType:
 			return ivk.Invoke(ivk.IPVarP)
-		} else if t == _DurationType {
+		case _IPNetType:
+			return ivk.Invoke(ivk.IPNetVarP)
+		case _IPMaskType:
+			return ivk.Invoke(ivk.IPMaskVarP)
+		case _DurationType:
 			return ivk.Invoke(ivk.DurationVarP)
 		}
 
@@ -218,6 +239,27 @@ func (b *Binder) bindToPrimitive(v reflect.Value) func(*invoker) error {
 		default:
 			return &BindError{Message: "unsupported type of field", Type: v.Type()}
 		}
+	}
+}
+
+// bindToCount invoking the binding method on Count type
+func (b *Binder) bindToCount(v reflect.Value) func(*invoker) error {
+	return func(ivk *invoker) error {
+		return ivk.WithInvoke(func(f *structField) error {
+			ivk.CountVarP((*int)(v.Addr().Interface().(*Count)), f.Name(), f.Shorthand(), f.Usage())
+			return nil
+		})
+	}
+}
+
+// bindToBytesHex invoking the binding method on BytesHex type
+func (b *Binder) bindToBytesHex(v reflect.Value) func(*invoker) error {
+	return func(ivk *invoker) error {
+		return ivk.WithInvoke(func(f *structField) error {
+			ivk.BytesHexVarP((*[]byte)(v.Addr().Interface().(*BytesHex)), f.Name(), f.Shorthand(),
+				f.Value.Interface().(BytesHex), f.Usage())
+			return nil
+		})
 	}
 }
 
@@ -420,6 +462,9 @@ func (m *mapValue) String() string {
 // Set sets a command line argument into map
 func (m *mapValue) Set(arg string) (err error) {
 	kv := strings.SplitN(arg, "=", 2)
+	if len(kv) != 2 {
+		return &BindError{Message: "invalid key-value pair format, key=value"}
+	}
 
 	var key, value interface{}
 	if key, err = newPrimitiveValue(m.Key, kv[0]); err != nil {
